@@ -1,0 +1,277 @@
+Request: ZSTUDENT-21
+Package: ZSTUDENT21
+
+
+Programs:
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_1
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZSTUDENT21_1.
+
+WRITE 'Hello ABAP'.
+
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_2
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zstudent21_2.
+
+PARAMETERS: pa_name TYPE char10, "이름은?
+            pa_num TYPE i. "나이는?
+
+DATA gv_name TYPE char10.
+DATA gv_num TYPE i.
+DATA gv_result TYPE i.
+
+ADD 1 TO gv_num. "gv_num=gv_num+1.
+MOVE gv_num TO gv_result. "gv_result=gv_num.
+
+WRITE 'Your name:'.
+WRITE pa_name.
+
+NEW-LINE.
+
+WRITE 'Your age:'. "changed by student21 on 2022.02.12
+WRITE pa_num.
+
+NEW-LINE.
+
+WRITE: 'Result:', gv_result.
+
+*ctrl + < :한번에 주석 걸기
+*ctrl + > :한번에 주석 풀기
+
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZBC400_21_HELLO
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZBC400_21_HELLO.
+
+*Unit8 Exercise12 p.89
+
+PARAMETERS pa_name TYPE string.
+
+Write 'Hello World!'.
+
+NEW-LINE.
+
+Write: 'Hello', pa_name.
+
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_3
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zstudent21_3.
+
+DATA: lv_char TYPE c LENGTH 3,
+      lv_numc TYPE n LENGTH 5,
+      lv_string TYPE string.
+
+DATA: lv_numc2 TYPE n.
+DATA: lv_char2. "char 1 기본으로 설정
+
+DATA: lv_pack TYPE p LENGTH 3 DECIMALS 2.
+
+DATA: lv_date TYPE d,
+      lv_time TYPE t,
+      lv_int TYPE i.
+*D,T는 length 지정 불가
+
+lv_char = 'abc'. "ab, abcdefg, 123
+lv_numc = 123.
+lv_string = '졸리신가요?'.
+lv_pack = '3.14'. ".이 소수점인지 문장인지 구분해야하므로 p타입에서는 ''필요
+
+WRITE: lv_char, lv_numc, lv_string.
+
+WRITE:/ lv_char, lv_numc, lv_string, / lv_pack.
+*new-line = /
+
+*-----local type
+TYPES: tv_c_type TYPE c LENGTH 8,
+       tv_n_type TYPE n LENGTH 5,
+       tv_p_type TYPE p LENGTH 3 DECIMALS 2.
+DATA: lv_type1 TYPE tv_c_type.
+
+lv_type1 = 'abcde'.
+
+
+*-----global type
+DATA lv_scarr Type s_carr_id.
+data: ls_scarr type sbc400focc.
+data: lt_spfli type spfli.
+
+lv_scarr = 'AA'.
+write:/ lv_scarr.
+
+ls_scarr-carrid = 'LH'.
+write:/ ls_scarr-carrid.
+
+Data: lv_scarr2 Like lv_scarr.
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_4
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zstudent21_4.
+
+TYPES: tv_percentage TYPE p LENGTH 3 DECIMALS 2.
+
+DATA: gv_percen TYPE tv_percentage,
+      gv_num1 TYPE i VALUE 17,
+      gv_num2 LIKE gv_num1,
+      gv_city TYPE c LENGTH 15,
+      gv_carrid TYPE s_carr_id,
+      gv_connid TYPE s_conn_id.
+
+CONSTANTS: gc_mark type c VALUE 'X'.
+
+WRITE: /15 TEXT-001,
+        35 sy-datum,
+        /15 'Time..'(a02),
+        35 sy-uzeit,
+        /15 'Your name..'(abc),
+        35 sy-uname,
+        /15 sy-cprog.
+
+*더블클릭으로 text symbol 설정. 문자, 숫자 3자리로 지정
+*Goto에서 translate
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_5
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zstudent21_5.
+
+CONSTANTS: gc_qf TYPE s_carr_id VALUE 'QF'.
+DATA: gv_carrid1 TYPE s_carr_id,
+      gv_carrid2 TYPE s_carr_id VALUE 'LH',
+      gv_count TYPE i.
+
+MOVE gc_qf TO gv_carrid1.
+
+gv_carrid2 = gv_carrid1.
+gv_count = gv_count + 1.
+
+CLEAR: gv_carrid1,
+       gv_carrid2,
+       gv_count.
+BREAK-POINT.
+
+
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_6
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zstudent21_6.
+
+PARAMETERS: pa_max TYPE sbc400focc-seatsmax,
+            pa_occ TYPE sbc400focc-seatsocc.
+
+DATA: gv_percen TYPE sbc400focc-percentage,
+      gv_length TYPE i,
+      gv_string TYPE string.
+
+DATA: lv_percen TYPE string.
+DATA: lv_percen2 TYPE string.
+
+gv_percen = pa_occ / pa_max * 100.
+
+WRITE: gv_percen.
+
+lv_percen = gv_percen.
+
+CONCATENATE lv_percen '%' InTO lv_percen2.
+
+WRITE: lv_percen2.
+
+gv_string = 'abc'.
+gv_length = strlen( gv_string ).
+
+WRITE gv_length.
+
+
+
+
+*&---------------------------------------------------------------------*
+*& Report ZSTUDENT21_7
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zstudent21_7.
+
+*--if
+PARAMETERS: gv_var TYPE i DEFAULT '10'.
+
+IF gv_var > 10.
+  WRITE:/ '일단 10보다 큽니다.'.
+  ELSEIF gv_var = 0.
+    WRITE:/ '0입니다.'.
+  ELSE.
+    WRITE:/ '10일지도..'.
+   ENDIF.
+
+*--case
+PARAMETERS: gv_var2 TYPE i DEFAULT '10'.
+
+CASE gv_var2.
+  WHEN 20.
+    WRITE:/ '20입니다'.
+  WHEN 10.
+    WRITE:/ '10인데!'.
+  WHEN OTHERS.
+    WRITE:/ '이게 뭐람.'.
+ ENDCASE.
+
+*--DO
+DO 20 TIMES.
+  WRITE:/ sy-index.
+IF sy-index > 10.
+EXIT.
+ENDIF.
+ENDDO.
+
+*--while
+DATA: lv_i TYPE i.
+
+SKIP 3.
+
+WHILE lv_i < 10.
+  lv_i = lv_i + 1.
+  WRITE:/ lv_i.
+ENDWHILE.
+
+*--select
+DATA: wa_scarr TYPE scarr.
+
+SELECT *
+  FROM scarr
+  INTO wa_scarr.
+  WRITE:/ wa_scarr-carrid.
+ENDSELECT.

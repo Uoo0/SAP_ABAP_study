@@ -1,0 +1,486 @@
+program naming rule
+:
+시작Z or Y ->스탠다드가 아님. customer
+R->report
+
+ZR->고객이 만든 리포트 프로그램
+
+ZR이름(용도)숫자(만든이)_번호
+ex>ZRSOL21_01
+
+
+:생성
+title>description
+
+대인화 설정(카톡첨부)->TYPE
+>1번프로그램. 리스트 프로그램. 리포트 프로그램.=Executable program
+
+
+
+[복습]
+*&---------------------------------------------------------------------*
+*& Report ZRSOL21_01
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_01.
+DATA gv_carrid1 TYPE scarr-carrid.
+DATA gv_carrid2 TYPE c LENGTH 3.
+DATA gv_carrid3(3).
+
+PARAMETERS pa_car TYPE scarr-carrid.
+PARAMETERS pa_car2 TYPE c LENGTH 3.
+
+
+DATA: gv_dat01 TYPE d,
+      gv_dat02 LIKE sy-datum.
+
+gv_dat01 = sy-datum.
+gv_dat02 = sy-datum.
+WRITE: gv_dat01, gv_dat02.
+
+
+
+[*p.130]
+*&---------------------------------------------------------------------*
+*& Report ZRSOL21_01
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_01.
+
+
+"Selection Screen 1000
+PARAMETERS pa_carr TYPE scarr-carrid.
+*scarr는 Type대신 LIKE사용 가능. 원래 변수가 아니나 자주 사용하는 문법이라 허용됨.
+DATA gs_scarr TYPE scarr.
+
+*이벤트 프로그램. 해당 순서대로 이벤트 발생
+INITIALIZATION.
+
+AT SELECTION-SCREEN OUTPUT. "PBO
+
+AT SELECTION-SCREEN. "PAI
+
+START-OF-SELECTION.
+
+  "ENDSELECT.
+*입력한 pa_carr값과 carrid번호가 같을 때, scarr에 속하는 field를 모두 gs_scarr에 넣어라.
+*Select&Endselect: 반복해서 하나씩 수행하므로 반복문.
+* Single을 사용하면 하나만 가져옴
+SELECT SINGLE *
+  FROM scarr
+  INTO gs_scarr
+  WHERE carrid = pa_carr.
+
+IF sy-subrc is NOT INITIAL. " 결과가 없을 경우 sy-subrc=00
+ WRITE 'Sorry, no data found'(T01).
+ELSE.
+
+NEW-LINE.
+WRITE: gs_scarr-carrid, gs_scarr-carrname.
+
+ENDIF.
+
+* p.136
+IF sy-subrc <> 0.
+   "MESSAGE 'data is not found' TYPE 'I'.
+  "메세지 클래스 만들기 [/ose91]에서도 생성 가능. 다국어 지원 X
+   MESSAGE i001(zsolm21) WITH pa_carr.
+ RETURN.
+ ENDIF.
+
+
+
+
+
+[p.131 Exercise]
+
+*&---------------------------------------------------------------------*
+*& Report ZBC400_21_COMPUTE
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zbc400_21_compute.
+
+PARAMETERS:
+  pa_int1 TYPE i,
+  pa_op TYPE c LENGTH 1,
+  pa_int2 TYPE i.
+
+DATA gv_result TYPE p LENGTH 16 DECIMALS 2.
+
+IF ( pa_op = '+' OR
+  pa_op = '-' OR
+  pa_op = '*' OR
+  pa_op = '/' AND pa_int2 <> 0 ).
+
+  CASE pa_op.
+    WHEN '+'.
+      gv_result = pa_int1 + pa_int2.
+    WHEN '-'.
+      gv_result = pa_int1 = pa_int2.
+    WHEN '*'.
+      gv_result = pa_int1 * pa_int2.
+    WHEN '/'.
+      gv_result = pa_int1 / pa_int2.
+  ENDCASE.
+
+  WRITE : 'Result'(res), gv_result.
+
+ ELSEIF pa_op = '/' AND pa_int2 = 0.
+   WRITE 'No division by zero!'(dbz).
+ ELSE.
+   WRITE 'Invalid operator!'(iop).
+
+ENDIF.
+
+
+
+[p.163~ subroutine Unit10 Lesson2]
+
+*&---------------------------------------------------------------------*
+*& Report ZRSOL21_02
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_02.
+
+DATA: gv_num1 TYPE i VALUE '10', "default value. clear 시 initial value인 0으로 돌아감
+      gv_num2 LIKE gv_num1,
+      gv_result LIKE gv_num2.
+
+CLEAR gv_num2. "변수에 값을 넣기 전 깨끗히 지우는 습관이 중요
+gv_num2 = 2.
+
+CLEAR gv_result.
+
+*subrountine
+PERFORM cal."PERFORM cal. "기본적인 subroutine. 더블클릭->master로 생성. 함수와  같은 기능.
+
+WRITE:/ gv_num1, gv_num2, gv_result.
+
+*clear gv_num2.
+*gv_num2 = 4.
+*PERFORM cal.
+*write:/ gv_num1, gv_num2, gv_result.
+
+*&---------------------------------------------------------------------*
+*&      Form  CAL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+
+FORM cal .
+ gv_result = gv_num1 - gv_num2.
+ENDFORM.
+
+
+*call by value
+PERFORM cal USING p_n1. "던져준 값을 p_n1이 받는다. p_n1: 파라미터 변수
+
+FORM cal USING VALUE(p_n1).
+ "gv_result = gv_num1 - gv_num2.
+  gv_result = p_n1 - gv_num2.
+  p_n1 = p_n1 + 5. "call by value. p_n1은 바뀌지만 gv_num1은 바뀌지 않는다.
+ENDFORM.
+
+
+*call by value and result
+PERFORM cal USING p_n1
+      CHANGING gv_result.
+
+FORM cal USING VALUE(p_n1)
+      CHANGING VALUE(p_r). "call by value and result
+  p_n1 = p_n1 + 5.
+  p_r = p_n1 - gv_num2.
+ENDFORM.
+
+
+*call by value and reference
+PERFORM cal USING p_n1
+      CHANGING gv_result.
+
+FORM cal USING VALUE(p_n1)
+      CHANGING p_r. "call by reference
+  p_n1 = p_n1 + 5.
+  p_r = p_n1 - gv_num2.
+ENDFORM.
+
+
+PERFORM cal USING gv_num1 gv_num2
+      CHANGING gv_result.
+
+PERFORM cal USING gv_num1 gv_num2
+      CHANGING gv_result.
+
+FORM cal USING VALUE(p_n1) 
+		     p_n2 "자동 생성은 call by reference. USING에선 꼭 VALUE 붙이기
+      CHANGING p_r.
+  p_r = p_n1 - p_n2.
+  ENDFORM
+
+
+
+
+[p.177 연습문제]
+*&---------------------------------------------------------------------*
+*& Report ZBC400_21_COMPUTE
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zbc400_21_subroutine.
+
+PARAMETERS:
+  pa_int1 TYPE i,
+  pa_op TYPE c LENGTH 1,
+  pa_int2 TYPE i.
+
+DATA gv_result TYPE p LENGTH 16 DECIMALS 2.
+DATA tv_result LIKE gv_result.
+
+IF ( pa_op = '+' OR
+  pa_op = '-' OR
+  pa_op = '*' OR
+  pa_op = '/' AND pa_int2 <> 0 OR
+  pa_op = '%' AND pa_int2 <> 0 ).
+
+  CASE pa_op.
+    WHEN '+'.
+      gv_result = pa_int1 + pa_int2.
+    WHEN '-'.
+      gv_result = pa_int1 = pa_int2.
+    WHEN '*'.
+      gv_result = pa_int1 * pa_int2.
+    WHEN '/'.
+      gv_result = pa_int1 / pa_int2.
+    WHEN '%'.
+      PERFORM calc_percen USING pa_int1 pa_int2
+            CHANGING gv_result.
+  ENDCASE.
+
+  WRITE : 'Result'(res), gv_result.
+
+ ELSEIF pa_op = '/' AND pa_int2 = 0.
+   WRITE 'No division by zero!'(dbz).
+ ELSE.
+   WRITE 'Invalid operator!'(iop).
+
+ENDIF.
+*&---------------------------------------------------------------------*
+*&      Form  CALC_PERCEN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PA_INT1  text
+*      -->P_PA_INT2  text
+*      <--P_GV_RESULT  text
+*----------------------------------------------------------------------*
+FORM calc_percen  USING    VALUE(pv_act)
+                           VALUE(pv_max)
+                  CHANGING VALUE(cv_result).
+cv_result = pv_act / pv_max * 100.
+ENDFORM.
+
+
+
+
+
+
+[include 프로그램. main프로그램에서 사용할 글로벌 변수를 Include프로그램에서 선언]
+
+[include > TOP]
+*&---------------------------------------------------------------------*
+*& Include ZRSOL21_03_TOP                                    Report ZRSOL21_03
+*&
+*&---------------------------------------------------------------------*
+REPORT ZRSOL21_03.
+
+*생성시 TOP include에 체크. include program
+
+DATA gs_scarr TYPE scarr.
+
+Parameters pa_car LIKE gs_scarr-carrid.
+
+
+[main]
+*&---------------------------------------------------------------------*
+*& Report  ZRSOL21_03
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE ZRSOL21_03_TOP                          .    " global Data
+
+* INCLUDE ZRSOL21_03_O01                          .  " PBO-Modules
+* INCLUDE ZRSOL21_03_I01                          .  " PAI-Modules
+INCLUDE ZRSOL21_03_F01                          .  " FORM-Routines
+
+INITIALIZATION.
+
+AT SELECTION-SCREEN OUTPUT. "PBO
+AT LINE-SELECTION. "PAI
+START-OF-SELECTION.
+
+*SELECT SINGLE carrname
+*  from scarr
+*  into gs_scarr-carrname
+*  WHERE carrid = pa_car.
+*위 기능을 subroutine으로 바꾸기
+
+PERFORM get_airline_name USING pa_car
+      CHANGING gs_scarr-carrname.
+*FO1에 생성
+
+"message로 이니셜밸류 뜰 경우 값이 없다고 출력해보기
+WRITE gs_scarr-carrname.
+
+[include>F01]
+
+*&---------------------------------------------------------------------*
+*&  Include           ZRSOL21_03_F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Form  GET_AIRLINE_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_PA_CAR  text
+*      <--P_GS_SCARR_CARRNAME  text
+*----------------------------------------------------------------------*
+FORM get_airline_name  USING   VALUE(p_code)
+                       CHANGING VALUE(p_carrname).
+
+SELECT SINGLE carrname
+  FROM scarr
+  INTO p_carrname
+  WHERE carrid = p_code.
+
+ENDFORM.
+
+*function 가져오기
+[/ose80 function group 만들기 -> function module 만들기 카톡참고]
+
+FORM get_airline_name USING VALUE(p_code)
+      CHANGING VALUE(p_carrname).
+
+CALL FUNCTION 'ZFSOL13_01'
+EXPORTING "iv가 받을 값을 p가 던짐
+  iv_carrid = p_code
+IMPORTING "ev가 던져주는 값을 p로 받음
+ENDFORM.
+
+
+
+
+[Unit11  p.220~221]
+
+*&---------------------------------------------------------------------*
+*& Report ZRSOL21_04
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_04.
+
+DATA: BEGIN OF gs_info,
+  stdno TYPE n LENGTH 4,
+  sname TYPE c LENGTH 10,
+  email TYPE string,
+  END OF gs_info.
+
+DATA gt_info LIKE TABLE OF gs_info. "structure형태를 가진 테이블 형태의 변수
+
+START-OF-SELECTION. "Event
+gs_info-stdno = '0001'.
+gs_info-sname = 'KANG'.
+APPEND gs_info TO gt_info.
+
+gs_info-sname = 'HAN'.
+APPEND gs_info TO gt_info.
+
+clear gs_info.
+gs_info-sname = 'SHIN'.
+APPEND gs_info TO gt_info.
+
+CLEAR gs_info.
+LOOP AT gt_info INTO gs_info. "gt의 값들을 gs에 담아서 출력. 반복.
+  WRITE:/ gs_info-stdno, gs_info-sname.
+  CLEAR gs_info.
+ENDLOOP.
+
+
+
+
+[p.240]
+선언 시 표현 방법 숙지!
+
+DATA: gs_info TYPE scarr,
+      gt_info LIKE TABLE OF gs_info.
+==
+DATA: gt_info TYPE TABLE OF scarr_tab,
+      gs_info LIKE LINE OF gt_info.
+
+==
+DATA: gs_info TYPE LINE OF scarr_tab,
+      gt_info LIKE TABLE OF gs_info.
+
+
+
+[Internal Table p.241]
+
+*&---------------------------------------------------------------------*
+*& Report ZRSOL21_05
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_05.
+
+DATA: BEGIN OF gs_list,
+  carrid TYPE spfli-carrid,
+  carrname TYPE scarr-carrname,
+  connid TYPE spfli-connid,
+  cityfrom TYPE spfli-cityfrom,
+  END OF gs_list,
+  gt_list LIKE TABLE OF gs_list.
+
+START-OF-SELECTION.
+
+  CLEAR gt_list.
+  SELECT carrid connid cityfrom
+    FROM spfli
+    INTO CORRESPONDING FIELDS OF TABLE gt_list. "correspoding 때문이라도 data이름은 기존 타입과 유사하게!
+
+CLEAR gs_list.
+LOOP AT gt_list INTO gs_list.
+  SELECT SINGLE carrname
+    FROM scarr
+    INTO gs_list-carrname
+    WHERE carrid = gs_list-carrid.
+
+* WRITE:/ gs_list-carrid, gs_list-carrname,
+*         gs_list-connid, gs_list-cityfrom.
+
+*MODIFY gt_list FROM gs_list.
+*gt_list를 모두 gs_list로 바꾸기
+
+MODIFY gt_list FROM gs_list TRANSPORTING carrname.
+*gt_list 중 carrname을 gs_list로 바꿈
+
+CLEAR gs_list.
+ENDLOOP.
+
+cl_demo_output=>display_data( gt_list ).
+
+*MODIFY gt_list FROM gs_list INDEX 1. "LOOP문 안이 아닐 경우 위치를 지정해주어야 한다.
+
+
+
+
+
+------------------------------
+ZRSOL21_05 이해하기. subroutine 작성해보기. 유닛11 읽기.

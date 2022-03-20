@@ -1,0 +1,182 @@
+[ZRSOL21_10]
+*&---------------------------------------------------------------------*
+*& Report  ZRSOL21_10
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrsol21_10_top                          .    " global Data
+
+INCLUDE zrsol21_10_o01                          .  " PBO-Modules
+INCLUDE zrsol21_10_i01                          .  " PAI-Modules
+INCLUDE zrsol21_10_f01                          .  " FORM-Routines
+
+INITIALIZATION.
+
+PERFORM set_default_value.
+*날짜 디폴트 설정
+*so_date-sign = 'I'.
+*so_date-option = 'BT'.
+*so_date-low = sy-datum - 365.
+*so_date-high = sy-datum.
+*APPEND so_date To so_date[].
+
+AT SELECTION-SCREEN OUTPUT.
+
+AT SELECTION-SCREEN.
+
+START-OF-SELECTION.
+
+
+  CLEAR gt_sch.
+  SELECT carrid connid fldate price
+    FROM sflight
+    INTO CORRESPONDING FIELDS OF TABLE gt_sch
+    WHERE carrid = pa_car "AA
+    AND connid EQ pa_con "0017
+    AND fldate IN so_date[].
+    "AND fldate BETWEEN '20200311' AND '20200415'.
+
+
+CLEAR gs_sch.
+LOOP AT gt_sch INTO gs_sch.
+
+"문제1> get airline Name 후 perform 처리
+PERFORM get_airline_name USING gs_sch-carrid
+      CHANGING gs_sch-carrname.
+
+  "문제2> Cal Seat 후 perform 처리
+  PERFORM car_seat USING gs_sch-seatsmax gs_sch-seatsocc
+        CHANGING gs_sch-seatstot.
+*gs_sch-seatstot = gs_sch-seatsmax - gs_sch-seatsocc.
+
+
+"문제3> get connection info ( City ) 후 perform 처리
+PERFORM get_conn_info USING gs_sch-carrid gs_sch-connid
+      CHANGING gs_sch.
+*SELECT SINGLE cityfrom cityto
+*  FROM spfli
+*  INTO CORRESPONDING FIELDS OF gs_sch
+*  WHERE carrid = gs_sch-carrid
+*  AND connid = gs_sch-connid.
+
+  MODIFY gt_sch FROM gs_sch. "TRANSPORTING carrname seatstot.
+  CLEAR gs_sch.
+ENDLOOP.
+*WRITE 'write'.
+*MESSAGE i016(pn) WITH 'Test'. "start-of-selection 종료. 이후 select-screen으로 돌아가는 것을 이벤트라고 한다
+
+cl_demo_output=>display_data( gt_sch ).
+
+
+
+
+[ZRSOL21_10_F01]
+*&---------------------------------------------------------------------*
+*&      Form  GET_AIRLINE_NAME
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_SCH_CARRID  text
+*      <--P_GS_SCH_CARRNAME  text
+*----------------------------------------------------------------------*
+FORM get_airline_name  USING    VALUE(p_car)
+                       CHANGING p_carrname.
+
+SELECT SINGLE carrname
+  FROM scarr
+  INTO p_carrname
+  WHERE carrid = p_car.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  CAR_SEAT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_SCH_SEATSMAX  text
+*      -->P_GS_SCH_SEATSOCC  text
+*      <--P_GS_SCH_SEATSTOT  text
+*----------------------------------------------------------------------*
+FORM car_seat  USING  VALUE(p_num1) "call by value
+                        p_num2 "call by reference
+               CHANGING VALUE(p_tot). "call by result
+  p_tot = p_num1 - p_num2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  GET_CONN_INFO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_GS_SCH_CARRID  text
+*      -->P_GS_SCH_CONNID  text
+*      <--P_GS_SCH  text
+*----------------------------------------------------------------------*
+FORM get_conn_info  USING    VALUE(p_carrid)
+                             VALUE(p_connid)
+                    CHANGING ps_info LIKE gs_sch. "LIKE를 붙여주며 dynamic 벗어남
+
+SELECT SINGLE cityfrom cityto
+  FROM spfli
+  INTO CORRESPONDING FIELDS OF gs_sch
+  "INTO ( ps_info-cityfrom, ps_info-cityto) ps_info가 structure변수이기 때문에 오류  >>dynamic parameter
+  WHERE carrid = p_carrid
+  AND connid = p_connid.
+
+ENDFORM.
+
+
+
+---------------------
+[SE11] 테이블 만들기. ..?
+ZTSOLDESK21
+
+DOMAIN: ZDMEMNO21
+Description: [sol] Member Numbers
+
+p.17~19해보기
+
+
+--------------
+
+[ZRSOL21_11]
+
+REPORT ZRSOL21_11.
+
+"ztsoldesk21 zsinfo21 zdemname21 생성해야함!
+
+DATA: gt_info TYPE zsinfo21_t, "Table Type
+      gs_info LIKE LINE OF gt_info.
+
+DATA: gs_info TYPE LINE OF zsinfo21_t,
+      gt_info LIKE TABLE OF gs_info.
+
+DATA gs_info01 TYPE ztsoldesk21. "Transparent Table
+DATA gs_info02 TYPE zsinfo21. "structure
+
+DATA: BEGIN OF gs_info03,
+  memno TYPE zsinfo21-memno,
+  memno TYPE zdemname21,
+  airline TYPE scarr, "Transparent Table
+END OF gs_info03.
+
+gs_info02-mname = 'KangSK'.
+gs_info02-airline-carrid = 'KA'.
+
+gs_info03-airline-carrid = 'AA'.  "-(dash)로 연결된다면 structure변수
+
+
+-------------------
+
+p.28 Structure
+
+p.36 Table Type
+
+*p.40 Deep Structure 나중에
+
+p.70 Transparent Table
+
+
+p.146~147 Text table 개념 중요!

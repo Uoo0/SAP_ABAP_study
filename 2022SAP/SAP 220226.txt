@@ -1,0 +1,395 @@
+1. 사진
+올린 물품들이 일관적인지. 물품이나, 구도 등
+사진이 한 장 밖에 없을 경우 거르거나 셀러에게 추가 사진 요구하기
+공장제 제품이 아닌 이상, 연관/추천 상품에서 완전 똑같은 사진이 있는 경우 도용이니 거르기
+
+2. 리뷰
+판매 개수, 리뷰 개수 확인. 적어도 세자리 이상
+부정적 피드백 확인 -> 저는 사진에 비해 색이 옅다 이런건 감안하고 보는데 여러분 기준에 따라..
+가짜, 배송 안 왔는데 답 없음 이런 건 무조건 거르기
+
+같은 계정이 복붙한 리뷰를 연달아 올린 경우가 있음.
+댓글 알바일 수 있으므로 그 리뷰 직전의 부정적 피드백 꼭 확인하기
+
+3. 상품 상세
+가로 세로 높이 확인하기
+treatment, heat, clarity 확인. 없으면 셀러에게 문의!
+상품명은 natural인데 내용엔 합성이라 적어두는 애들도 있음..
+루비인데 treatment 베릴륨이면 사파이어에 베릴륨 처리해서 루비 색을 냈다는 의미일 때가 종종.
+
+4. 가격대
+원석질문, 탐라에 문의
+원섯마켓에서 보석명 검색해서 가격 확인
+---------------
+
+
+이제부터 무조건 include 사용
+
+
+[ZRSOL21_06] p.241
+주석 제거해서 01 I01 F01 생성
+
+
+[ZRSOL21_06 TOP] 먼저 변수 선언
+
+*&---------------------------------------------------------------------*
+*& Include ZRSOL21_06TOP                                     Report ZRSOL21_06
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_06.
+
+*DATA: gs_list TYPE spfli, "structure 변수, structure 타입
+*      gt_list LIKE TABLE OF gs_list. " gt_list TYPE TABLE OF spfli.
+
+DATA: BEGIN OF gs_list,
+  carrid TYPE spfli-carrid,
+  carrname TYPE scarr-carrname,
+  connid TYPE spfli-connid,
+  cityfrom TYPE spfli-cityfrom,
+  cityto TYPE spfli-cityto,
+  END OF gs_list,
+  gt_list LIKE TABLE OF gs_list.
+
+
+
+[ZRSOL21_06] subroutine 해보기
+*&---------------------------------------------------------------------*
+*& Report  ZRSOL21_06
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrsol21_06top                           .    " global Data
+
+INCLUDE zrsol21_06o01                           .  " PBO-Modules
+INCLUDE zrsol21_06i01                           .  " PAI-Modules
+INCLUDE zrsol21_06f01                           .  " FORM-Routines
+
+"LOAD-OF-PROGRAM.  "프로그램 실행시 딱 한 번 실행되는 이벤트. function group프로그램에서 주로 사용
+
+INITIALIZATION. "프로그램 실행시 딱 한 번 실행되는 이벤트
+
+AT SELECTION-SCREEN OUTPUT. "PBO 화면 제공 전 발생하는 이벤트
+
+AT SELECTION-SCREEN. "PAI 화면 제공 후 발생하는 이벤트
+
+START-OF-SELECTION. "새로운 selection 이벤트 발생 명령어
+
+*프로그램 시작시 기본 작성 코드
+
+"includes가 inactivate인 경우 오류 발생. 항상 전체가 activate인 상태에서 실행
+CLEAR gt_list.
+SELECT carrid connid cityfrom cityto
+  FROM spfli
+  INTO CORRESPONDING FIELDS OF TABLE gt_list.
+
+CLEAR gs_list.
+LOOP AT gt_list INTO gs_list.
+  "Get Airline Name
+  SELECT SINGLE carrname
+    FROM scarr
+    INTO gs_list-carrname
+    WHERE carrid = gs_list-carrid.
+    "원본이 바뀌지는 않으므로 MODIFY
+    MODIFY gt_list FROM gs_list. "INDEX sy-tabix. 생략 가능
+    "현재 인덱스의 해당 라인을 변경
+    CLEAR gs_list.
+  ENDLOOP.
+
+ cl_demo_output=>display_data( gt_list ). "gt_list 화면에 보여주기
+
+
+ SORT gt_list BY carrname DESCENDING. "내림차순 정렬
+ READ TABLE gt_list INDEX 1 INTO gs_list. "첫번째 것 읽기
+ cl_demo_output=>display_data( gs_list ).
+
+
+[p.245~]
+IF gt_list IS INITIAL.
+ENDIF.
+
+*비었는지 아닌지만 확인
+
+READ TABLE gt_list INDEX 1 INTO gs_list.
+
+IF sy-subrc <> 0.
+ENDIF.
+*확인 후 첫번째 값 가져옴
+
+
+
+[ZRSOL21_06] p.246 마지막 줄 바꾸기
+
+ SORT gt_list BY carrname DESCENDING. "내림차순 정렬
+* READ TABLE gt_list INDEX 1 INTO gs_list. "첫번째 것 읽기
+ READ TABLE gt_list WITH KEY carrid = 'UA' INTO gs_list.
+ WRITE sy-tabix.
+ cl_demo_output=>display_data( gs_list ).
+
+
+
+
+[ZRSOL21_07] ZRSOL21_06 copy.
+체크하지 않고 생성시, 메인만 카피된 상태. 인클루드는 06을 그대로 사용
+
+
+
+[ZRSOL21_08] ZRSOL21_06 copy p.250 Header Line
+전체 체크로 생성.
+
+[ZRSOL21_08_TOP]
+*&---------------------------------------------------------------------*
+*& Include ZRSOL21_06TOP                                     Report ZRSOL21_06
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_06.
+
+*DATA: gs_list TYPE spfli, "structure 변수, structure 타입
+*      gt_list LIKE TABLE OF gs_list. " gt_list TYPE TABLE OF spfli.
+
+DATA: BEGIN OF gt_list OCCURS 0, "structure변수를 internal table로 변경
+  carrid TYPE spfli-carrid,
+  carrname TYPE scarr-carrname,
+  connid TYPE spfli-connid,
+  cityfrom TYPE spfli-cityfrom,
+  cityto TYPE spfli-cityto,
+  END OF gt_list.
+
+  PARAMETERS pa_car LIKE gt_list-carrid.
+  SELECT-OPTIONS so_car FOR gt_list-carrid.
+  "여러개의 조건 지정 가능. 즉, internal table
+  "SELECT-OPTIONS는 헤더라인이 있는 internal table을 자동 생성해줌.
+
+
+
+[ZRSOL21_08]
+*&---------------------------------------------------------------------*
+*& Report  ZRSOL21_06
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrsol21_08_top.
+*INCLUDE zrsol21_06top                           .    " global Data
+
+INCLUDE zrsol21_08_o01.
+*INCLUDE zrsol21_06o01                           .  " PBO-Modules
+INCLUDE zrsol21_08_i01.
+*INCLUDE zrsol21_06i01                           .  " PAI-Modules
+INCLUDE zrsol21_08_f01.
+*INCLUDE zrsol21_06f01                           .  " FORM-Routines
+
+"LOAD-OF-PROGRAM.  "프로그램 실행시 딱 한 번 실행되는 이벤트. function group프로그램에서 주로 사용
+
+INITIALIZATION. "프로그램 실행시 딱 한 번 실행되는 이벤트
+
+CLEAR: so_car, so_car[].
+so_car-sign = 'I'.
+so_car-option = 'BT'.
+so_car-low = 'AA'.
+so_car-high = 'UA'.
+APPEND so_car TO so_car[].
+
+AT SELECTION-SCREEN OUTPUT. "PBO 화면 제공 전 발생하는 이벤트
+
+AT SELECTION-SCREEN. "PAI 화면 제공 후 발생하는 이벤트
+
+START-OF-SELECTION. "새로운 selection 이벤트 발생 명령어
+
+*프로그램 시작시 기본 작성 코드
+
+CLEAR gt_list[]. "structure변수가 아닌 internal table를 초기화
+SELECT carrid connid cityfrom cityto
+  FROM spfli
+  INTO CORRESPONDING FIELDS OF TABLE gt_list "무조건 internal table이 오는 자리이므로 gt_list[]생략.
+  WHERE carrid IN so_car[].
+
+  cl_demo_output=>display_data( gt_list[] ).
+
+CLEAR gt_list.
+LOOP AT gt_list[] INTO gt_list. "[]부터 생략가능
+  "Get Airline Name
+  SELECT SINGLE carrname  "read로 바꿔볼 수도
+    FROM scarr
+    INTO gt_list-carrname
+    WHERE carrid = gt_list-carrid.
+
+    MODIFY gt_list[] FROM gt_list. "[]부터 생략가능
+    CLEAR gt_list.
+  ENDLOOP.
+
+cl_demo_output=>display_data( gt_list ). "gt_list 화면에 보여주기
+
+*READ TABLE gt_list[] INDEX 1 INTO gt_list.
+*READ TABLE gt_list INDEX 1 INTO gt_list.
+READ TABLE gt_list INDEX 1 .
+
+cl_demo_output=>display_data( gt_list ).
+
+
+
+
+ [UNIT12 p.285 캡처 확인]
+
+->위 내용을 function module로 만드는 것이 연습문제 p.291
+한 번 해보기!
+
+
+p.296
+DATA gv_subrc TYPE sy-subrc.
+자주 쓰는 문법
+
+p.309
+
+
+
+
+[UNIT 13 p.345]
+
+se93 t코드 조회 가능
+
+[ZRSOL21_09]
+*&---------------------------------------------------------------------*
+*& Report ZRSOL21_09
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_09.
+"p.285
+
+DATA gs_info TYPE bc400_s_connection.
+PARAMETERS: pa_car TYPE spfli-carrid,
+pa_con TYPE spfli-connid.
+
+"OPEN SQL
+SELECT SINGLE *
+  FROM spfli
+  INTO CORRESPONDING FIELDS OF gs_info
+  WHERE carrid = pa_car
+  AND connid = pa_con.
+
+*cl_demo_output=>display_data( gs_info ).
+ WRITE gs_info-carrid.
+  "p.345 최근엔 잘 쓰지 않는 기법
+
+
+
+
+
+[카톡캡쳐 문제 참고] p.362
+[ZRSOL21_10] include로 생성
+
+
+[ZRSOL21_10_TOP]
+*&---------------------------------------------------------------------*
+*& Include ZRSOL21_10_TOP                                    Report ZRSOL21_10
+*&
+*&---------------------------------------------------------------------*
+REPORT zrsol21_10.
+
+*Sch List
+DATA: BEGIN OF gs_sch,
+  carrid TYPE sflight-carrid,
+  carrname TYPE scarr-carrname,
+  connid TYPE sflight-connid,
+  cityfrom TYPE spfli-cityfrom,
+  cityto TYPE spfli-cityto,
+  fldate TYPE sflight-fldate,
+  price TYPE sflight-price,
+  seatstot TYPE i,
+  seatsmax TYPE sflight-seatsmax,
+  seatsocc TYPE sflight-seatsocc,
+  seatsmax_b TYPE sflight-seatsmax_b,
+  seatsocc_b TYPE sflight-seatsocc_b,
+  seatsmax_f TYPE sflight-seatsmax_f,
+  seatsocc_f TYPE sflight-seatsocc_f,
+  END OF gs_sch,
+  gt_sch LIKE TABLE OF gs_sch.
+
+*SE11에서 SFLIGHT를 검색하여 contents를 통해 검색 범위를 설정해보기
+
+*Selection Screen
+PARAMETERS: pa_car TYPE sflight-carrid DEFAULT 'AA',
+	pa_con TYPE sflight-connid.
+"active상태일 때 goto > text elements > selection texts > DDIC 체크 후 저장
+"파라미터가 사용자가 편하게 번역됨
+
+SELECT-OPTIONS so_date FOR gs_sch-fldate.
+
+
+
+[ZRSOL21_10]
+*&---------------------------------------------------------------------*
+*& Report  ZRSOL21_10
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrsol21_10_top                          .    " global Data
+
+INCLUDE zrsol21_10_o01                          .  " PBO-Modules
+INCLUDE zrsol21_10_i01                          .  " PAI-Modules
+INCLUDE zrsol21_10_f01                          .  " FORM-Routines
+
+INITIALIZATION.
+
+*날짜 디폴트 설정
+so_date-sign = 'I'.
+so_date-option = 'BT'.
+so_date-low = sy-datum - 365.
+so_date-high = sy-datum.
+APPEND so_date To so_date[].
+
+
+AT SELECTION-SCREEN OUTPUT.
+
+AT SELECTION-SCREEN.
+
+START-OF-SELECTION.
+
+  CLEAR gt_sch.
+  SELECT carrid connid fldate price
+    FROM sflight
+    INTO CORRESPONDING FIELDS OF TABLE gt_sch
+    WHERE carrid = pa_car "AA
+    AND connid EQ pa_con "0017
+    AND fldate IN so_date[].
+    "AND fldate BETWEEN '20200311' AND '20200415'.
+
+
+CLEAR gs_sch.
+LOOP AT gt_sch INTO gs_sch.
+  "Cal Seat
+  gs_sch-seatstot = gs_sch-seatsmax - gs_sch-seatsocc.
+
+"get airline Name 후 perform 처리
+
+"get connection info ( City ) 후 perform 처리
+
+  Modify gt_sch From gs_sch TRANSPORTING seatstot.
+  Clear gs_sch.
+ENDLOOP.
+
+
+*WRITE 'write'.
+*MESSAGE i016(pn) WITH 'Test'. "start-of-selection 종료. 이후 select-screen으로 돌아가는 것을 이벤트라고 한다
+
+cl_demo_output=>display_data( gt_sch ).
+
+
+----------
+[perform 날짜 디폴트 설정]
+perform set_dafualt_value.
+F01에 붙여넣기.
+----------
+
+
+
+[Unit16은 sql에 익숙해지고 나서 보기]
+

@@ -1,0 +1,299 @@
+[UNIT 08]p.159
+
+SE11
+View에서 ZVSOL21_01 create
+>projection view / Database View(inner join) 차이 알기
+
+[projection view]
+Table: sflight > 보여줄 정보만 선택
+
+
+SELECT mandit carrid connid fldate planetype seatmax seatsocc
+from sflight
+와 같음.
+
+----------------
+SCARR
+AA XXX
+AB XXX
+
+SFLIGHT
+AA XXX
+AB XXX
+KA XXX
+
+SCARR 테이블이 check 테이블일 때, 존재하지 않은 값을 추가할 수 없다.
+->check테이블 설정은 데이터 정확성에 매우 큰 차이
+-----------------
+maintenance view : 이미 완성된 테이블의 CRUD 가능 하므로 Select *** from 뒤에 올 수 없다
+Help view : from 뒤에 올 수 없다
+left outer join 이다
+-----------------
+
+
+[Database view]
+tables: spfli > relationships 선택하여 check table로 scarr선택 > copy
+
+*여러 클라이언트가 사용할 수 있기에 MANDT 설정이 중요!
+
+View Fields에서 보여줄 값 선택
+Selection Conditions 에서 조건 설정
+
+
+
+-------------------
+SE11
+SPFLI > Where Used LIST 클릭 > view만 선택
+
+
+-------------------
+p.167참고. 연습문제 15 참고
+-------------
+[JOIN]
+p.77 p.78
+
+SELECT * FROM scarr AS a
+	INNER JOIN sflight AS b
+	ON a~carrid = b~carrid
+: scarr sflight는 순서 바뀌어도 괜찮음. 양쪽다 갖고 있는 데이터를 기준으로 하기 때문.
+
+SELECT * FROM scarr AS a 
+	LEFT OUTER JOIN sflight AS b
+	ON a~carrid = b~carrid
+: 순서가 바뀌면 데이터가 달라짐. scarr의 모든 정보가 나옴. 해당 데이터가 sflight에 없다면 그 부분만 공백.
+
+
+p.173 연습문제 나중에 해보기
+
+===========================
+
+[p.177, 180] maintenance view
+
+se11:  SFLIGHT21 연습용으로 만들어진 테이블
+se11: view: ZVSOL21_03 > create > tables: SFLIGHT21
+view fields에 키값 들어간 것 확인 가능 table fields에서 price, currency 추가
+maint.status에 access 설정 가능
+
+utilities > table maintenance generator > 카톡 사진 참고 설정. 삭제도 가능
+contents 에서 entries 추가 가능
+
+
+utilities > table maintenance generator> 기존 삭제 후 다시 two step으로 생성
+
+
+---------
+
+p.186 연습문제 해보기
+
+
+
+=============
+/nSM30
+
+/nse93 ->t코드 생성 변경 조회 가능 -> transaction with parameters ->카톡 참고
+
+
+=================
+
+
+p.202~
+
+/nse38
+
+[ZRSOL21_SH] create
+
+REPORT ZRSOL21_SH.
+
+*PARAMETERS pa_flag TYPE ztattend13-aflag.
+*PARAMETERS pa_date TYPE ztattend13-adate.
+
+*PARAMETERS pa_cl1 TYPE ztclass13-class.
+*PARAMETERS pa_cl2 TYPE ztclass13_t-class.
+
+*PARAMETERS: pa_car1 TYPE scarr-carrid,
+*            pa_con1 TYPE spfli-connid,
+*            pa_dat1 TYPE sflight-fldate. "좋지 않은 방법. car1과 상관 없이 con1 dat1 전부가 선택 목록에 뜬다.
+
+*PARAMETERS: pa_car2 TYPE sbook-carrid,
+*            pa_con2 TYPE sbook-connid,
+*            pa_dat2 TYPE sbook-fldate. "추천 방법. car2를 선택하면 con2, dat2에서 해당되는 car의 값만 고를 수 있다.
+
+PARAMETERS pa_cl1 TYPE ztclass13-class.
+*MATCHCODE OBJECT zsh13_01.
+PARAMETERS pa_cl2 TYPE ztclass13-pernr. "search help 생성된 상태.
+
+"p.218 연습문제 해보기!
+
+
+
+====================
+====================
+
+
+p.239 Unit11~
+
+Screen Program.
+
+[SAPMZSC21_01] include. M타입으로 만들기
+create Screen
+create T code [ZSC2101]
+
+screen > layout
+ZSC2101 티코드 실행 시 레이아웃대로 보임
+
+
+
+[TOP]
+*&---------------------------------------------------------------------*
+*& Include MZSC2101_TOP                                      Module Pool      SAPMZSC21_01
+*&
+*&---------------------------------------------------------------------*
+PROGRAM sapmzsc21_01.
+
+* Condition
+
+*DATA: gv_carrid TYPE scarr-carrid,
+*      gv_connid TYPE spfli-connid.
+
+*DATA: BEGIN OF gs_cond,
+*  carrid TYPE scarr-carrid,
+*  connid TYPE spfli-connid.
+
+
+"se11에서 structure 생성
+
+DATA: gs_cond TYPE ZSCOND21.
+
+"layout에서 > dictionary/program field window > get from program
+"세 경우의 차이 알아보기
+"글로벌 변수를 수정해도 layout은 바뀌지 않으므로 직접 삭제 후 수정해주어야 한다
+
+
+
+
+[ZSCOND21]
+input help/check 에서
+foreign key 설정.
+H_SPFLI search help 설정
+*꼭 activation!
+
+
+-------------------
+[main]
+" INITIALIZATION. 1번 타입 프로그램에서만 작동 가능
+
+LOAD-OF-PROGRAM.
+ zscond21-carrid = 'AA'.
+
+혹은
+
+screens 0100에서 모듈을 O01에 연결
+
+[MZSC2101_O01]
+MODULE status_0100 OUTPUT.
+*  SET PF-STATUS 'xxxxxxxx'.
+*  SET TITLEBAR 'xxx'.
+
+  zscond21-carrid = 'AA'.
+ENDMODULE.
+
+------------------
+[Screens] > [0100]
+PROCESS BEFORE OUTPUT.
+ MODULE STATUS_0100. "O01에 연결
+*
+PROCESS AFTER INPUT.
+MODULE USER_COMMAND_0100. "I01에 연결
+
+
+
+[MZSC2101_O01]
+
+MODULE status_0100 OUTPUT.
+*  SET PF-STATUS 'S100'.
+  SET TITLEBAR 'T100'.
+
+"  zscond21-carrid = 'AA'.
+ENDMODULE.
+
+title만들기
+status만들기, function 설정(카톡)
+
+
+
+[MZSC2101_I01]
+MODULE user_command_0100 INPUT.
+
+CASE sy-ucomm.
+  WHEN 'EXIT'.
+    LEAVE PROGRAM.
+  WHEN 'CANC'.
+    MESSAGE i016(pn) WITH sy-ucomm 'Message I TYPE'.
+  WHEN 'BACK'.
+    MESSAGE s016(pn) WITH sy-ucomm 'Message S TYPE'.
+  WHEN OTHERS.
+    MESSAGE i016(pn) WITH sy-ucomm 'ENTER'.
+ENDMODULE.
+
+
+
+
+--------------
+
+status s100 에 search 버튼 만들기
+새 structure 만들기 (카톡)
+
+레이아웃에서 get from dictionary  ----------->버튼 활성화가 안 됨?
+
+
+
+
+[MZSC2101_I01]
+MODULE user_command_0100 INPUT.
+
+CASE sy-ucomm.
+  WHEN 'EXIT'.
+    LEAVE PROGRAM.
+  WHEN 'CANC'.
+    MESSAGE i016(pn) WITH sy-ucomm 'Message I TYPE'.
+  WHEN 'BACK'.
+    MESSAGE s016(pn) WITH sy-ucomm 'Message S TYPE'.
+   WHEN 'SEAR' OR 'SEARCH'.
+     SELECT SINGLE *
+       FROM spfli
+       INTO CORRESPONDING FIELDS OF zsinfo21
+       WHERE carrid = zscond21-carrid
+       AND connid = zscond21-connid.
+  WHEN OTHERS.
+    MESSAGE i016(pn) WITH sy-ucomm 'ENTER'.
+ENDCASE.
+ENDMODULE.
+
+
+
+--------------
+위 부분을 서브루틴 처리
+
+
+PERFORM get_info USING zscond21-carrid zscond21-connid
+            CHANGING zsinfo21.
+
+
+[F01]
+FORM get_info  USING    VALUE(p_carrid)
+                        VALUE(p_connid)
+               CHANGING ps_info TYPE zsinfo21.
+
+  CLEAR ps_info.
+     SELECT SINGLE *
+       FROM spfli as a INNER JOIN scarr as b
+       ON a~carrid = b~carrid
+       INTO CORRESPONDING FIELDS OF ps_info
+       WHERE a~carrid = p_carrid
+       AND a~connid = p_connid.
+    IF sy-subrc <> 0.ㄴ
+      MESSAGE i016(pn) WITH 'DATA is Not FOUND'.
+    ENDIF.
+ENDFORM.
+
+

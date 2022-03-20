@@ -1,0 +1,602 @@
+p.265
+
+
+1. Module Pool 프로그램 만들기
+seq SCREEN
+
+[SAPMZSC21_02]
+
+2. T code를 만들어야 실행 가능 (t코드는 Z,Y로 파일명이 시작해야 한다.)
+dynpro=screen이란 의미]
+
+3. 상태바(standard tool bar)를 활성화 시키자
+->screen > MODULE STATUS_100. 활성화 -> O01
+
+[MZSC21_02O01]
+
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'S100'.
+  SET TITLEBAR 'T100'.
+ENDMODULE.
+
+> [PF-STATUS]
+카톡처럼 설정
+
+
+->screen > MODULE USER_COMMAND_0100. 활성화 -> I01
+
+[MZSC21_02I01]
+
+MODULE user_command_0100 INPUT.
+  case ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+  WHEN OTHERS.
+ ENDCASE.
+ENDMODULE.
+
+
+4. ok_code 변수
+
+[MZSC21_02TOP]
+
+PROGRAM SAPMZSC21_02.
+
+DATA ok_code TYPE sy-ucomm.
+
+
+[screens]>100>Element list> ok_code 변수 추가
+
+
+
+5.
+
+[MZSC21_02TOP]
+
+PROGRAM SAPMZSC21_02.
+
+DATA ok_code TYPE sy-ucomm.
+
+TABLES: zscond1301, sdyn_conn.
+DATA gs_cond TYPE zscond1301. "결과 표시할 때 따로 변수를 만들기도
+
+* sy-ucomm : Function code that raised PAI
+* zscond1301 : carrid , connid 를 포함한 DB 테이블
+* sdyn_conn : Screen Structure - Connection. DB 테이블
+
+screen 100 > layout >카톡처럼 입력
+
+
+[MZSC21_02I01]
+
+MODULE user_command_0100 INPUT.
+  case ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+  WHEN OTHERS.
+    CLEAR gs_cond.
+    MOVE-CORRESPONDING zscond1301 TO gs_cond.
+ ENDCASE.
+ENDMODULE.
+
+
+6. SEARCH 기능
+
+screen 레이아웃 카톡처럼 추가 설정
+
+[S100]
+Toolbar> SEARCH를 F8에 설정 (카톡 참고)
+
+*search 더블 클릭 후 아이콘 설정 가능 (카톡 참고)
+
+
+
+[MZSC21_02I01]
+
+MODULE user_command_0100 INPUT.
+  CASE ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+    WHEN 'SEARCH'.
+      SELECT SINGLE *
+        FROM spfli
+        INTO CORRESPONDING FIELDS OF sdyn_conn
+        WHERE carrid = zscond1301-carrid
+        AND connid = zscond1301-connid.
+  WHEN OTHERS.
+*    CLEAR gs_cond.
+*    MOVE-CORRESPONDING zscond1301 TO gs_cond.
+ ENDCASE.
+ENDMODULE.
+
+
+결과: 카톡 참고
+
+
+perform 서브루틴 만들기: 카톡 참고
+
+
+[MZSC21_02I01]
+
+MODULE user_command_0100 INPUT.
+  CASE ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+    WHEN 'SEARCH'.
+      PERFORM get_info USING zscond1301-carrid zscond1301-connid
+            CHANGING sdyn_conn.
+
+  WHEN OTHERS.
+*    CLEAR gs_cond.
+*    MOVE-CORRESPONDING zscond1301 TO gs_cond.
+ ENDCASE.
+ENDMODULE.
+
+[MZSC21_02F01]
+
+FORM get_info  USING    VALUE(p_carrid)
+                        VALUE(p_connid)
+               CHANGING ps_info TYPE sdyn_conn.
+
+      CLEAR ps_info.
+      SELECT SINGLE *
+        FROM spfli
+        INTO CORRESPONDING FIELDS OF ps_info
+        WHERE carrid = p_carrid
+        AND connid = p_connid.
+
+ENDFORM.
+
+
+main에 설정해서 디폴트 검색 결과 설정 가능: 카톡 참고 2장
+
+
+[SAPMZSC21_02]
+
+INCLUDE MZSC21_02TOP                            .    " global Data
+
+ INCLUDE MZSC21_02O01                            .  " PBO-Modules
+ INCLUDE MZSC21_02I01                            .  " PAI-Modules
+ INCLUDE MZSC21_02F01                            .  " FORM-Routines
+
+ LOAD-OF-PROGRAM.
+
+ zscond1301-carrid = 'AA'.
+ zscond1301-connid = '0017'.
+
+ PERFORM get_info USING zscond1301-carrid
+                        zscond1301-connid
+                  CHANGING sdyn_conn.
+
+
+
+====================================================
+p.277 MODIFY
+
+
+[screen100]
+PROCESS BEFORE OUTPUT.
+MODULE STATUS_0100.
+MODULE modify_screen_0100.
+*
+PROCESS AFTER INPUT.
+MODULE USER_COMMAND_0100.
+
+
+[MZSC21_02O01]
+
+MODULE modify_screen_0100 OUTPUT.
+  LOOP AT SCREEN.
+
+  IF sy-uname <> 'STUDENT-21'.
+    case screen-name.
+      when 'ZSCOND1301-CARRID'.
+    "screen-input = '0'.
+    screen-active = '0'. "필드가 보였다 안 보였다 할 수 있음"
+    "MODIFY SCREEN. 이 위치가 가장 좋으나 중간에 다른 로직이 들어갈 수 있으므로 아래에 두는 경우도 있다.
+    ENDCASE.
+  ENDIF.
+    MODIFY SCREEN.
+
+    ENDLOOP.
+ENDMODULE.
+
+
+
+p.280~281 읽기!
+
+
+
+==============================================================
+p.282
+
+[SAPMZSC2103] 강사님 복사
+
+second screen  200 생성
+
+next dynpro를 100은 200, 200은 100으로 변경해주기
+
+200의 레이아웃에 결과인 info 넣어주기
+
+
+
+
+[MZSC2103_O01]
+
+MODULE status_0200 OUTPUT.
+  SET PF-STATUS 'S200'.
+  SET TITLEBAR 'T200' WITH zscond1301-carrid zscond1301-connid.
+ENDMODULE.
+
+
+
+T200 생성시 제목은 카톡 참고
+SET screen 없이 아래 해보고, next dynpro 원래대로 만들어준 다음 set screen으로 이동시켜보기
+
+
+====p.284 SET SCREEN
+
+[MZSC2103_I01]
+
+MODULE user_command_0100 INPUT.
+  CASE ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+    WHEN 'SEARCH'.
+      PERFORM get_info USING zscond1301-carrid
+                             zscond1301-connid
+                       CHANGING sdyn_conn.
+
+      "SET SCREEN 0200. 아래의 로직을 실행해야 할 때
+      "LEAVE SCREEN      
+
+     LEAVE TO SCREEN 200.
+
+      MESSAGE i016(pn) WITH 'MSG TEST'.
+      "화면 멈추고 (100screen) 메세지 창으로 안내
+      "MESSAGE s016(pn) WITH 'MSG TEST'.
+      "화면 이동 (200 screen) 하단 상태메세지로 안내
+
+
+
+    WHEN OTHERS.
+
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+CASE sy-ucomm.
+  WHEN 'BACK'.
+    LEAVE TO SCREEN 100.
+ENDCASE.
+ENDMODULE.
+
+
+=========p.285 CALL SCREEN
+
+MODULE user_command_0100 INPUT.
+  CASE ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+    WHEN 'SEARCH'.
+      PERFORM get_info USING zscond1301-carrid
+                             zscond1301-connid
+                       CHANGING sdyn_conn.
+
+
+        CALL SCREEN 200.
+	MESSAGE i016(pn) WITH 'MSG TEST'.
+
+    WHEN OTHERS.
+
+  ENDCASE.
+ENDMODULE.
+
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+CASE sy-ucomm.
+  WHEN 'BACK'.
+   " CALL SCREEN 100.
+    LEAVE TO SCREEN 0.
+ENDCASE.
+ENDMODULE.
+
+
+CALL SCREEN은
+100 스크린이 스택에 쌓인 후 200으로 이동. baack을 누르면 이전 100, 200 스크린이 스택에 쌓인 채로 다시 100 생성.
+즉, 반복할 경우 메모리에 과부하가 걸린다.
+
+LEAVE TO SCREEN 0.을 사용하면 200 스크린은 종료되고, 0번 스크린은 없으므로 이전 단계인 100으로 돌아간다.
+
+위 상태에서 200으로 이동한 뒤에는 메세지가 뜨지 않으나, Back 실행으로 100으로 돌아오면 메세지가 발생한다.
+
+
+
+
+
+
+============================
+p.287 팝업창은 call 사용
+
+SCREEN 101 생성
+
+[o01]에서 S101 만들 때 dialog 박스로!
+
+CLOSE F12 등록
+
+[I0]
+CASE sy-ucomm.
+	WEHN 'CLOSE'.
+        LEAVE SCREEN.
+ENDCASE.
+
+클로즈 클릭시 사라지도록 설정.
+
+
+
+=================================
+p.290연습문제 검토해보기
+
+===============================
+unit12 p.300
+
+카톡 참고. Menu Bar
+
+
+screen100 layout 더블클릭후 카톡처럼 required로 바꿔보기
+
+
+카톡 3장 : EXIT 설정 functional type E
+
+연습문제 p.317 확인하기
+
+==================================
+unit13 p.338
+
+
+[MZSC2103_TOP]
+*Rdaio Button
+DATA: gv_ra1 TYPE c LENGTH 1 VALUE 'X', "라디오 디폴트 선택지 X로 표시
+      gv_ra2 TYPE c,
+      gv_ra3.
+
+
+카톡 참고. 레이아웃에서 라디오 설정. 목록 선택해서 그룹화 해주어야 하나만 선택 가능
+
+
+p.346 연습문제!
+
+
+
+=============================================
+unit14 p. 362
+
+
+카톡. zscond1301 데이터 추가하기(카톡참고) > 이 경우 레이아웃 삭제 후 다시 만들어주는 것이 좋음
+
+p.365~ 카톡 참고. W(warning)보다는 E(error)를 쓰는 것이 좋음!
+
+
+
+[screen 100]
+
+PROCESS AFTER INPUT.
+
+CHAIN.
+FIELD: zscond1301-carrid, zscond1301-connid.
+MODULE check_connid.
+  ENDCHAIN.
+
+
+p.369~370
+
+on request : 값이 바뀔 경우 체크
+
+
+EX>
+검색조건
+날짜: 2020.01.01~2021.12.31 (기본 제시)
+
+on Chain-request : 입력하지 않은 경우에도 체크, 날짜를 잘 못 입력했을 때 체크(값이 변경될 때 체크)
+
+
+
+============================================
+
+unit15 p.393
+
+[SAPMZSC2104] (SAPMZSC1310 복사)
+
+101 subscreen 만들기
+
+
+
+[100]
+
+PROCESS BEFORE OUTPUT.
+  MODULE status_0100.
+  MODULE default_info.
+
+  "CALL SUBSCREEN sub INCLUDING 'SAPMZSC2104' '0101'.
+  CALL SUBSCREEN sub INCLUDING sy-cprog '0101'.
+
+PROCESS AFTER INPUT.
+  MODULE exit AT EXIT-COMMAND.
+
+  CALL SUBSCREEN sub.
+  MODULE user_command_0100.
+
+
+
+
+============================================
+unit16 p.422
+
+탭: 레이아웃에 서브스크린 2개 이용
+
+[SAPMZSC2105] (SAPMZSC1320 복사)
+
+탭만들기(카톡 참고)
+
+
+[TOP]
+PROGRAM sapmzsc1302.
+
+DATA ok_code TYPE sy-ucomm.
+
+TABLES: zscond1301, scarr, spfli.
+
+CONTROLS my_tab TYPE TABSTRIP.
+  "controls : 변수 선언문. 
+
+
+
+
+[100]
+
+레이아웃 
+
+카톡참고 tab 설정. 꼭 func type 'P'!!
+
+
+
+PROCESS BEFORE OUTPUT.
+  MODULE status_0100.
+
+CALL SUBSCREEN sub1 INCLUDING sy-cprog '0101'.
+CALL SUBSCREEN sub2 INCLUDING sy-cprog '0102'.
+
+PROCESS AFTER INPUT.
+  MODULE exit AT EXIT-COMMAND.
+    
+  CALL SUBSCREEN sub1.
+  CALL SUBSCREEN sub2.
+ 
+  MODULE user_command_0100.
+
+
+
+
+[101] [102]보여줄 레이아웃 설정
+
+
+
+--------------------
+
+탭: 레이아웃에 서브스크린 1개 이용
+
+[SAPMZSC2106] (SAPMZSC1330 복사)
+
+두번째 탭의 subscreen 삭제. Dic.의 ref.field 동일. func Type 'none'!!
+
+[100]
+PROCESS BEFORE OUTPUT.
+  MODULE status_0100.
+
+ MODULE fill_dynnr.
+
+  CALL SUBSCREEN sub1 INCLUDING sy-cprog gv_dynnr.
+
+PROCESS AFTER INPUT.
+  MODULE exit AT EXIT-COMMAND.
+
+  CALL SUBSCREEN sub1.
+  MODULE user_command_0100.
+
+
+
+[TOP]
+PROGRAM sapmzsc1302.
+
+DATA ok_code TYPE sy-ucomm.
+
+TABLES: zscond1301, scarr, spfli.
+
+DATA gv_dynnr TYPE sy-dynnr.
+
+CONTROLS my_tab TYPE TABSTRIP.
+
+
+
+[ZSC2106_O01]
+MODULE fill_dynnr OUTPUT.
+  CASE my_tab-activetab.
+    WHEN 'TAB1'.
+      gv_dynnr = '0101'.
+    WHEN 'TAB2'.
+      gv_dynnr = '0102'.
+    WHEN OTHERS.
+      gv_dynnr = '0102'.
+      my_tab-activetab = 'TAB2'.
+  ENDCASE.
+ENDMODULE.
+
+
+[ZSC2106_I01]
+MODULE user_command_0100 INPUT.
+  CASE ok_code. "sy-ucomm.
+    WHEN 'EXIT'.
+      LEAVE PROGRAM.
+    WHEN 'CANC'.
+      LEAVE TO SCREEN 0.
+    WHEN 'BACK'.
+      SET SCREEN 0.
+      LEAVE SCREEN.
+    WHEN 'SEARCH'.
+      PERFORM get_info USING zscond1301-carrid
+                             zscond1301-connid
+                       CHANGING scarr spfli.
+      
+      WHEN 'Tab1' OR 'Tab2'.
+        my_tab-activetab = ok_code.
+        
+    WHEN OTHERS.
+
+  ENDCASE.
+ENDMODULE.
+
+
+
+
+
+===========
+연습문제 p.379, 405, 431 하기
+p.398~401 FG의 subscreen 활용은 마지막 주차 때!
