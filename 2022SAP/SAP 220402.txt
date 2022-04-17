@@ -1,0 +1,120 @@
+4권
+BC414 - Programming Database Updates
+
+
+INSERT / UPDATE
+
+MODIFY
+
+DELETE -> Std Table
+
+--------------------------------
+ABAP DICTIONARY에서
+
+SCARR ->copy ZTSCARR21 -> change (언어 설정. 유지)
+
+Description: My Scarr
+
+MANDIT ~
+CARRID ~~
+CURRCODE  WAERS
+
+copy ZTSCARR21_T
+
+MANDIT ~
+CARRID ~~
+LANGU (key) SPRAS
+CARRNAME S_CARRNAME
+
+
+------------------------------------
+program: ZRSOL21_DB01
+
+DATA ls_ztscarr21_t TYPE ztscarr21_t.
+ls_ztscarr21_t-carrid = 'UA'.
+ls_ztscarr21_t_langu = 'TT'.
+ls_ztscarr21_t-carrname = 'Test'.
+
+MODIFY ztscarr21_t FROM ls_ztscarr21_t.
+WRITE sy-subrc.
+
+
+===========================
+프로그램 생성: SAPMZDB2101
+
+[F01]
+"insert
+
+FROM db_update USING VALUE(ps_update) TYPE ztscarr21.
+
+ DATA ls_info TYPE ztscarr21.
+
+ ls_info-carrid = ps_update-carrid.
+ ls_info-currcode - ps_update-currcode.
+
+ INSERT INTO ztscarr21 VALUES ls_info.
+ IF sy-subrc <> 0.
+  MESSAGE s01(pn) WITH 'INSERT ERROR'.
+ ELSE.
+  MESSAGE s01(pn) WITH 'INSERT SUCCESS'.
+ ENDIF.
+
+ENDFORM.
+
+
+"update
+FROM db_update USING VALUE(ps_update) TYPE ztscarr21.
+
+UPDATE ztscarr21 SET currcode = ps_update-currcode.
+ IF sy-subrc <> 0.
+  MESSAGE s01(pn) WITH sy-dbcnt  'update ERROR'.
+ ELSE.
+  MESSAGE s01(pn) WITH sy-dbcnt 'update SUCCESS'.
+ ENDIF.
+
+ENDFORM.
+
+
+"modify: modify는 에러가 발생하지 않으므로 웬만하면 사용하지 않는 편
+
+FROM db_update USING VALUE(ps_update) TYPE ztscarr21.
+
+ DATA ls_info TYPE ztscarr21.
+
+ ls_info-carrid = ps_update-carrid.
+ ls_info-currcode - ps_update-currcode.
+
+ MODIFY ztscarr21 FROM ls_info.
+ IF sy-subrc <> 0.
+  MESSAGE s01(pn) WITH 'MODIFY ERROR'.
+ ELSE.
+  MESSAGE s01(pn) WITH 'MODIFY SUCCESS'.
+ ENDIF.
+
+ENDFORM.
+
+---------------
+
+/osm12
+
+
+----------------
+Unit3 Exercise4
+
+p.67
+WAIT, COLLECT를 이용 LOCK 설정. SM12로 확인해보기
+---------------
+p.99
+POC 캡쳐확인
+
+-----------------
+p.112
+update function module 만들기
+
+
+CFIUT 캡쳐확인
+
+-------
+Exercise6
+
+SAPMZDB9901, 9902 정리

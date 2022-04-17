@@ -1,0 +1,557 @@
+V, VI -> 중요하지만 주니어 개발자는 잘 쓰지 않을 심화 내용. 시험 30%이상 나오므로 중요!
+
+CL_DWMO_OUTPUT => DISPLAY_DATA( XXX ).
+클래스            
+
+/ose24 (클래스, 인터페이스 관리 도구)
+
+ZCLSTD1300_01 -> 생성 시도
+카톡 참고
+
+CL_GUI_ALV_GRID -> 검색
+
+레퍼런스 : p.39 (필기 p.3)`
+
+클래스
+객체 변수: 클래스에 선언된 변수. 값을 대입할 수 있다.
+오브젝트: 클래스에 생성된, 실제 값을 갖는 것.
+
+
+-------------
+V Unit1
+
+p.5
+
+C:
+학생이라는 개념(object) 큰 틀은 유지 됨.
+function group 개별 값은 학생마다 하나씩 만들어주어야 함.
+->
+java:
+객체 지향. 학생마다 만들어주지 않고 학생이라는 큰 틀 하나만으로 이용 가능.
+
+p.8
+class 개념 도입
+
+
+p.10 예시와 아래 코드 비교
+
+[ZCL_STD21_01]
+
+CLASS lcl_std DEFINITION.
+	Public SECTION.
+	 DATA name TYPE string.
+	PROTECTED SECTION.
+
+	PRIVATE SECTION.
+ENDCLASS.
+
+DATA go_std TYPE REF TO lcl_std.
+
+STARR-OFSELECTION.
+	CREATE OBJECT go_std.
+	go_std->name = 'Kang'.
+	WRITE go_std->name.
+-------------------
+Unit2
+
+p.39~
+
+
+[ZCL_STD21_01]
+
+CLASS lcl_std DEFINITION.
+	Public SECTION.
+	 
+	PROTECTED SECTION.
+
+	PRIVATE SECTION.
+	 DATA name TYPE string. "다른 사람이 건들지 못하도록.
+ENDCLASS.
+
+DATA go_std TYPE REF TO lcl_std.
+
+STARR-OFSELECTION.
+	CREATE OBJECT go_std.
+	go_std->stdno = '20220101'.
+	go_std->name = 'Kang'.
+	WRITE go_std->stdno, go_std->name.
+
+	CREATE OBJECT go_std.
+	go_std->stdno = '20220102'.
+	go_std->name = 'Han'.
+	WRITE go_std->stdno, go_std->name.
+
+p.44
+객체 변수는 한 번에 하나의 객체를 순차적으로 레퍼런스한다. 동시에 여러개는 불가능하다.
+
+
+------
+[ZCL_STD21_02]
+
+DATA go_std01 TYPE REF TO lcl_std.
+DATA go_std02  TYPE REF TO go_std01.
+
+STARR-OF-SELECTION.
+  CREATE OBJECT go_std01.
+  go_std01->stdno = '20220101'.
+  go_std01->name = 'Kang'.
+  go_std01->count = 1.
+*
+
+  CREATE OBJECT go_std02.
+  go_std02->stdno = '20220102'.
+  go_std02->name = 'Han'.
+  go_std02->count = 2.
+
+WRITE: go_std01->stdno,
+        go_std01->name,
+        lcl_std->count.
+WRITE: go_std02->stdno,
+        go_std02->name,
+        lcl_std->count.
+---------
+
+[REPORT ZCL_STD21_03.]
+
+CLASS lcl_std DEFINITION.
+PUBLIC SECTION.
+ METHODS get_info EXPORTING ev_info TYPE string.
+
+PRIVATE SECTION.
+ DATA: stdno TYPE string VALUE '20220101',
+       name Like stdno VALUE 'Kang'.
+ ENDCLASS.
+
+CLASS lcl_std IMPLEMENTATION.
+  METHOD get_info.
+    CONCATENATE me->stdno me->name
+    INTO ev_info
+    SEPARATED BY space.
+    ENDMETHOD.
+ENDCLASS.
+
+DATA go_std01 TYPE REF TO lcd_std.
+DATA gv_info TYPE string.
+
+START-OF-SELECTION.
+
+CREATE OBJECT go_std01.
+*go_std01->get_info (IMPORTING ev_info = gv_info ).
+CALL METHOD go_std01->get_info
+IMPORTING
+  ev_info = gv_info.
+WRITE gv_info.
+
+----------
+p.83
+
+[REPORT ZCL_STD21_04.]
+
+CLASS lcl_std DEFINITION.
+  PUBLIC SECTION.
+  METHODS constructor IMPORTING iv_stdno TYPE string
+                                iv_sname TYPE string.
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+  DATA: stdno TYPE string,
+        sname TYPE string.
+  CLASS-DATA count TYPE i.
+ ENDCLASS.
+
+ CLASS lcl_std IMPLEMENTATION.
+   METHOD constructor.
+     lcl_std=>count = lcl_std=>count + 1.
+     me->stdno = iv_stdno.
+     me->sname = iv_sname.
+     ENDMETHOD.
+ ENDCLASS.
+
+ DATA: go_std01 Type REF TO lcl_std.
+
+ START-OF-SELECTION.
+
+ CREATE OBJECT go_std01
+ EXPORTING
+   iv_stdno = '20220101'
+   iv_sname = 'Kang'.
+------
+[set, get 추가]
+
+REPORT ZCL_STD21_04.
+
+CLASS lcl_std DEFINITION.
+  PUBLIC SECTION.
+  METHODS constructor IMPORTING iv_stdno TYPE string
+                                iv_sname TYPE string.
+  "get 추기
+  METHODS get_info RETURNING VALUE(re_info) TYPE string.
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+  DATA: stdno TYPE string,
+        sname TYPE string.
+  CLASS-DATA count TYPE i.
+  "set 추가
+  METHODS set_info IMPORTING iv_stdno TYPE string
+                             iv_sname TYPE string.
+ ENDCLASS.
+
+ CLASS lcl_std IMPLEMENTATION.
+   METHOD constructor.
+     lcl_std=>count = lcl_std=>count + 1.
+     me->set_info( EXPORTING
+       iv_stdno = iv_stdno
+       iv_sname = iv_sname
+       ).
+    ENDMETHOD.
+
+     METHOD get_info.
+     re_info = me->stdno && ', ' && me->sname. "최근 문법. 버전 유의
+     ENDMETHOD.
+     METHOD set_info.
+     me->stdno = iv_stdno.
+     me->sname = iv_sname.
+     ENDMETHOD.
+ ENDCLASS.
+
+ DATA: go_std01 Type REF TO lcl_std,
+       gv_info TYPE string.
+
+ START-OF-SELECTION.
+
+ CREATE OBJECT go_std01
+ EXPORTING
+   iv_stdno = '20220101'
+   iv_sname = 'Kang'.
+
+ gv_info = go_std01->get_info( ).
+* go_std01->get_info( RECEIVING re_info = gv_info ). "retunring은 receiving으로 받는다.
+ WRITE gv_info.
+
+------------------------------------------------
+p.50
+static method 객체와 상관없이 어느 위치에서나 사용 가능하다.
+
+
+[REPORT ZCL_STD21_04.]
+
+CLASS lcl_std DEFINITION.
+  PUBLIC SECTION.
+  METHODS constructor IMPORTING iv_stdno TYPE string
+                                iv_sname TYPE string.
+  "get 추기
+  METHODS get_info RETURNING VALUE(re_info) TYPE string.
+
+CLASS-METHODS get_test.
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+  DATA: stdno TYPE string,
+        sname TYPE string.
+  CLASS-DATA count TYPE i.
+  "set 추가
+  METHODS set_info IMPORTING iv_stdno TYPE string
+                             iv_sname TYPE string.
+ ENDCLASS.
+
+ CLASS lcl_std IMPLEMENTATION.
+   METHOD get_test. "static 메소드는 instance 사용 불가. 어느 위치에서나  사용 가능하다.
+    MESSAGE i016(pn) WITH lcl_std=>count me=>sname.
+   ENDMETHOD.
+   
+   METHOD constructor.
+     lcl_std=>count = lcl_std=>count + 1.
+     me->set_info( EXPORTING
+       iv_stdno = iv_stdno
+       iv_sname = iv_sname
+       ).
+    ENDMETHOD.
+
+     METHOD get_info.
+     re_info = me->stdno && ', ' && me->sname. "최근 문법. 버전 유의
+     ENDMETHOD.
+     METHOD set_info.
+     me->stdno = iv_stdno.
+     me->sname = iv_sname.
+     ENDMETHOD.
+ ENDCLASS.
+
+ DATA: go_std01 Type REF TO lcl_std,
+       gv_info TYPE string.
+
+ START-OF-SELECTION.
+ LCL_STD=>get_test( ). "객체와 상관없이 사용 가능
+ 
+ CREATE OBJECT go_std01
+ EXPORTING
+   iv_stdno = '20220101'
+   iv_sname = 'Kang'.
+
+ gv_info = go_std01->get_info( ).
+* go_std01->get_info( RECEIVING re_info = gv_info ).
+ WRITE gv_info.
+  LCL_STD=>get_test( ).
+
+------------------------------------------------
+p.95 constructor 종류와 생성 순서 주의
+
+
+p.60 create object
+
+[casting]
+REPORT ZCL_STD21_04.
+
+CLASS lcl_std DEFINITION.
+  PUBLIC SECTION.
+    METHODS constructor IMPORTING iv_stdno TYPE string
+                                  iv_sname TYPE string.
+    METHODS get_info RETURNING VALUE(re_info) TYPE string.
+    CLASS-METHODS get_test.
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+    DATA: stdno TYPE string,
+          sname TYPE string.
+    CLASS-DATA count TYPE i.
+    METHODS set_info IMPORTING iv_stdno TYPE string
+                               iv_sname TYPE string.
+ENDCLASS.
+CLASS lcl_std IMPLEMENTATION.
+  METHOD get_test.
+    MESSAGE i016(pn) WITH lcl_std=>count.
+  ENDMETHOD.
+  METHOD constructor.
+    lcl_std=>count = lcl_std=>count + 1.
+    me->set_info( EXPORTING
+                     iv_stdno = iv_stdno
+                     iv_sname = iv_sname
+                 ).
+  ENDMETHOD.
+  METHOD set_info.
+    me->stdno = iv_stdno.
+    me->sname = iv_sname.
+  ENDMETHOD.
+  METHOD get_info.
+    re_info = me->stdno && ', ' && me->sname.
+  ENDMETHOD.
+ENDCLASS.
+DATA: go_std TYPE REF TO lcl_std,
+      gt_std LIKE TABLE OF go_std,
+      gv_info  TYPE string.
+
+START-OF-SELECTION.
+  CREATE OBJECT go_std01
+    EXPORTING
+      iv_stdno = '20220101'
+      iv_sname = 'Kang'.
+  APPEND go_std TO gt_std.
+
+CLEAR go_std. "gt에서 이미 레퍼선스 하고 있으므로 clear한다고 객체가 사라지지 않는다.
+
+  CREATE OBJECT go_std02
+    EXPORTING
+      iv_stdno = '20220102'
+      iv_sname = 'Han'.
+APPEND go_std  TO gt_std.
+
+LOOP AT gt_std INTO go_std.
+  CLEAR gv_info.
+  gv_info = go_std->get_info( ).
+  WRITE:/ gv_info.
+ENDLOOP.
+------------------------------
+p.74
+
+
+REPORT zcl_std21_05.
+
+CLASS lcl_std DEFINITION.
+  PUBLIC SECTION.
+    METHODS constructor IMPORTING iv_stdno TYPE string
+                                  iv_sname TYPE string.
+    METHODS get_info  IMPORTING iv_name TYPE string
+                      RETURNING VALUE(re_info) TYPE string.
+    CLASS-METHODS get_test.
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+    DATA: stdno TYPE string,
+          sname TYPE string.
+    CLASS-DATA count TYPE i.
+    METHODS set_info IMPORTING iv_stdno TYPE string
+                               iv_sname TYPE string.
+ENDCLASS.
+CLASS lcl_std IMPLEMENTATION.
+  METHOD get_test.
+    MESSAGE i016(pn) WITH lcl_std=>count.
+  ENDMETHOD.
+  METHOD constructor.
+    lcl_std=>count = lcl_std=>count + 1.
+    me->set_info( EXPORTING
+                     iv_stdno = iv_stdno
+                     iv_sname = iv_sname
+                 ).
+  ENDMETHOD.
+  METHOD set_info.
+    me->stdno = iv_stdno.
+    me->sname = iv_sname.
+  ENDMETHOD.
+  METHOD get_info.
+    re_info = iv_name && me->stdno && ', ' && me->sname.
+  ENDMETHOD.
+ENDCLASS.
+DATA: go_std  TYPE REF TO lcl_std,
+      gt_std  LIKE TABLE OF go_std,
+      gv_info TYPE string.
+
+START-OF-SELECTION.
+  CREATE OBJECT go_std
+    EXPORTING
+      iv_stdno = '20220101'
+      iv_sname = 'Kang'.
+  APPEND go_std TO gt_std.
+
+  CLEAR go_std.
+  CREATE OBJECT go_std
+    EXPORTING
+      iv_stdno = '20220102'
+      iv_sname = 'Han'.
+  APPEND go_std TO gt_std.
+
+  LOOP AT gt_std INTO go_std.
+    CLEAR gv_info.
+    gv_info = go_std->get_info( EXPORTING iv_name = 'Test' ).
+"    gv_info = go_std->get_info( 'Test' ).
+    WRITE:/ gv_info.
+    CLEAR go_std.
+  ENDLOOP.
+
+-----------------------
+unit6 p.262
+
+
+/ose24 (클래스, 인터페이스 관리 도구)
+
+global class 생성. 카톡 참고
+attribute 설정. 카톡 참고
+methods 설정
+parameters 설정
+
+[global class를 이용]
+
+[ZCL_STD21_06]
+REPORT zcl_std21_06.
+DATA: go_std  TYPE REF TO zcl_std21,
+      gt_std  LIKE TABLE OF go_std,
+      gv_info TYPE string.
+
+START-OF-SELECTION.
+  CREATE OBJECT go_std
+    EXPORTING
+      iv_stdno = '20220101'
+      iv_sname = 'Kang'.
+  APPEND go_std TO gt_std.
+
+  CLEAR go_std.
+  CREATE OBJECT go_std
+    EXPORTING
+      iv_stdno = '20220102'
+      iv_sname = 'Han'.
+  APPEND go_std TO gt_std.
+
+  LOOP AT gt_std INTO go_std.
+    CLEAR gv_info.
+*    gv_info = go_std->get_info( 'Test' ).
+    gv_info = go_std->get_info(
+      EXPORTING iv_name = 'Test'
+    ).
+    WRITE:/ gv_info.
+    CLEAR go_std.
+  ENDLOOP.
+---
+
+
+unit3 p.116
+
+/nse24
+
+[ZCL_SUPER21]
+클래스 생성
+
+카톡참고
+
+[ZCL_STD21_07]
+REPORT ZCL_STD21_07.
+
+DATA: go_super TYPE REF TO zcl_super21,
+      go_sub TYPE REF TO zcl_sub21.
+
+START-OF-SELECTION.
+
+CREATE OBJECT go_super.
+
+go_super->sname3 = 'Super public'.
+*go_super->sname2 = 'Super protected'. 외부에서 접근불가
+*go_super->sname1 = 'Super private'. 외부에서 접근불가
+
+CREATE OBJECT go_sub.
+go_sub->sub3 = 'Sub public'.
+
+
+카톡참고. sub21에 superclass설정을 해주면, public, protected는 접근이 가능하다.
+-------------------
+[up casting&down casting]
+
+REPORT ZCL_STD21_07.
+
+DATA: go_super TYPE REF TO zcl_super21,
+      go_sub TYPE REF TO zcl_sub21,
+      go_sub2 Like go_sub.
+
+START-OF-SELECTION.
+
+CREATE OBJECT go_super.
+
+go_super->sname3 = 'Super public'.
+*go_super->sname2 = 'Super protected'. 외부에서 접근불가
+*go_super->sname1 = 'Super private'. 외부에서 접근불가
+
+CREATE OBJECT go_sub.
+go_sub->sub3 = 'Sub public'.
+
+go_super = go_sub. "Up Casting
+"go_super->sub3 ='Sub public by super'. 불가능
+
+"go_sub = go_super. 불가능
+go_sub2 ?=go_super. "down Casting
+
+go_sub2->sub3 = 'Test'.
+
+-------
+
+super에 메소드를 만들면 sub에서도 쓸 수 있다. sub에서 메소드를 수정하면 super의 메소드도 수정된다.
+
+코드의 객체가 super에 속하는지, sub에 속하는지, super를 상속받은 sub(sub속 super)에 속하는지 구분 할 수 있어야한다.
+
+
+p.119
+Redefinition
+sub에서는 super에서 상속받은 메소드 안의 파라미터는 수정할 수 없다.
+
+
+-------------------
+연습문제 풀어보기
+책 맨 앞 그림으로 다시 정리
+-------------------
+
+버티컬 마우스, 델타허브 손목받침대
+마이크로 소프트 스컬프트 에고노믹 무선 마우스
+https://kinesis-ergo.com/shop/advantage2/ 키보드 40만
+
+http://prod.danawa.com/info/?pcode=2310940

@@ -1,0 +1,92 @@
+3권 unit 3 p.87
+
+1. Selection Screen
+
+2. List( ALV ) -> Screen
+
+Event ->Screen인 기본적인 program 만들기
+
+
+
+[ZRALV2101] Exercise program
+
+
+INCLUDE ZRALV21_TOP                             .    " global Data
+
+ INCLUDE ZRALV21_O01                             .  " PBO-Modules
+ INCLUDE ZRALV21_I01                             .  " PAI-Modules
+ INCLUDE ZRALV21_F01                             .  " FORM-Routines
+
+* Event
+ INITIALIZATION.
+
+ AT SELECTION-SCREEN OUTPUT. "PBO
+
+ AT SELECTION-SCREEN. "PAI
+
+ START-OF-SELECTION.
+
+ "Get Sch List
+
+ "ALV Call
+ CALL SCREEN 0100.
+
+
+
+[TOP]
+
+REPORT ZRALV2101.
+
+DATA: gs_list TYPE sflight,
+      gt_list LIKE TABLE OF gs_list.
+
+"Selection Screen
+PARAMETERS pa_car TYPE sflight-carrid.
+PARAMETERS pa_con TYPE sflight-connid.
+SELECT-OPTIONS so_date FOR gs_list-fldate.
+
+
+
+하나도 못 따라 잡겠어서 걍 강사님 거 복붙함
+
+
+p.100 layout 따라해보기
+p. 120
+p.129 Method: set_table_for_first_display
+
+p.133 Exercise8 해보기
+
+
+
+
+
+unit4 p.144-
+p.156 LIGHT 적용
+p.157 SORT 적용
+p.158 ROW Color 적용
+
+[F01]
+FROM ex_functions.
+  CLEAR gt_ex.
+  gs_ex = cl_gui_alv_grid=>mc_mb_sum.
+  APPEND gs_ex TO gt_ex.
+ENDFROM
+
+잘 쓰진 않지만 가능한 방법중 하나
+
+p.165 Exercise10 확인해보기
+
+
+FROM set_fcat
+CLEAR: gt_fcat, gs_fcat.
+gs_fcat-fieldname = 'CARRID'.
+
+
+
+-------------------
+ALV 만들기
+
+1. Table: SBOOK
+2. 조건 
+parameters: 항공사 코드, 항공편 번호, 일자
+select-options: 고객 ID
